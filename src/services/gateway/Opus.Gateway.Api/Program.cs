@@ -1,0 +1,15 @@
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddCors();
+builder.Services.AddAuthentication("Bearer").AddJwtBearer();
+builder.Services.AddAuthorization();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+var app = builder.Build();
+app.UseCors(p => p.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapGet("/health", () => Results.Ok(new { ok = true }));
+app.MapGet("/gateway/ping", () => "pong");
+app.UseSwagger();
+app.UseSwaggerUI();
+app.Run();

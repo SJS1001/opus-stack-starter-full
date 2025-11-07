@@ -1,0 +1,32 @@
+{{- $svc := .Values.services }}
+{{- range $name, $conf := $svc }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+spec:
+  replicas: {{ $conf.replicaCount }}
+  selector:
+    matchLabels: { app: {{ $name }} }
+  template:
+    metadata:
+      labels: { app: {{ $name }} }
+    spec:
+      containers:
+      - name: {{ $name }}
+        image: {{ $.Values.global.image.repository }}/{{ $name }}:{{ $.Values.global.image.tag }}
+        ports: [{ containerPort: {{ default 8080 $conf.port }} }]
+        envFrom:
+          - secretRef: { name: opus-secrets }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+spec:
+  selector: { app: {{ $name }} }
+  ports:
+    - port: {{ default 80 $conf.port }}
+      targetPort: {{ default 8080 $conf.port }}
+---
+{{- end }}

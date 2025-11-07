@@ -1,0 +1,18 @@
+global:
+  image:
+    repository: ghcr.io/yourorg
+    tag: latest
+  ingress:
+    host: opus.local
+services:
+  gateway:
+    replicaCount: 1
+    port: 8080
+  customer:
+    replicaCount: 1
+  telemetry:
+    replicaCount: 1
+  workflow:
+    replicaCount: 1
+  files:
+    replicaCount: 1
