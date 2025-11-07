@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "opus-stack.fullname" . }}-config
+  labels:
+    {{- include "opus-stack.labels" . | nindent 4 }}
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  JWT__Issuer: {{ .Values.config.jwt.issuer | quote }}
+  JWT__Audience: {{ .Values.config.jwt.audience | quote }}
+  JWT__SigningKey: {{ .Values.config.jwt.signingKey | quote }}
+  JWT__ExpirationMinutes: {{ .Values.config.jwt.expirationMinutes | quote }}
+  JWT__EnableValidation: {{ .Values.config.jwt.enableValidation | quote }}
+  RAVEN__Urls: {{ .Values.config.raven.urls | quote }}
+  RAVEN__Database: {{ .Values.config.raven.database | quote }}
+  PG__ConnectionString: {{ .Values.config.postgres.connectionString | quote }}
+  MQTT__Broker: {{ .Values.config.mqtt.broker | quote }}
+  MQTT__Port: {{ .Values.config.mqtt.port | quote }}
+  RABBIT__Uri: {{ .Values.config.rabbitmq.uri | quote }}

@@ -1,0 +1,60 @@
+{{- range $service := list "customer" "telemetry" "workflow" "files" }}
+{{- $serviceConfig := index $.Values $service }}
+{{- if $serviceConfig.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "opus-stack.fullname" $ }}-{{ $service }}
+  labels:
+    {{- include "opus-stack.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $service }}
+spec:
+  replicas: {{ $serviceConfig.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "opus-stack.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $service }}
+  template:
+    metadata:
+      labels:
+        {{- include "opus-stack.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: {{ $service }}
+    spec:
+      {{- with $.Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: {{ $service }}
+        image: "{{ $.Values.global.imageRegistry }}/{{ $.Values.global.imageRepository }}/{{ $serviceConfig.image.repository }}:{{ $.Values.global.imageTag }}"
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ $serviceConfig.service.targetPort }}
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: {{ include "opus-stack.fullname" $ }}-config
+        resources:
+          {{- toYaml $serviceConfig.resources | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "opus-stack.fullname" $ }}-{{ $service }}
+  labels:
+    {{- include "opus-stack.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $service }}
+spec:
+  type: {{ $serviceConfig.service.type }}
+  ports:
+  - port: {{ $serviceConfig.service.port }}
+    targetPort: {{ $serviceConfig.service.targetPort }}
+    protocol: TCP
+    name: http
+  selector:
+    {{- include "opus-stack.selectorLabels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $service }}
+{{- end }}
+{{- end }}

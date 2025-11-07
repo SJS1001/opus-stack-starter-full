@@ -1,0 +1,67 @@
+{{- if .Values.ravendb.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: opus-ravendb
+  labels:
+    {{- include "opus-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ravendb
+spec:
+  type: {{ .Values.ravendb.service.type }}
+  ports:
+  - port: {{ .Values.ravendb.service.port }}
+    targetPort: 8080
+    name: http
+  selector:
+    {{- include "opus-stack.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: ravendb
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opus-ravendb
+  labels:
+    {{- include "opus-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ravendb
+spec:
+  serviceName: opus-ravendb
+  replicas: {{ .Values.ravendb.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "opus-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ravendb
+  template:
+    metadata:
+      labels:
+        {{- include "opus-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: ravendb
+    spec:
+      containers:
+      - name: ravendb
+        image: "{{ .Values.ravendb.image.repository }}:{{ .Values.ravendb.image.tag }}"
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 38888
+          name: tcp
+        env:
+          {{- toYaml .Values.ravendb.env | nindent 10 }}
+        {{- if .Values.ravendb.persistence.enabled }}
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/ravendb/data
+        {{- end }}
+  {{- if .Values.ravendb.persistence.enabled }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.ravendb.persistence.storageClass }}
+      storageClassName: {{ .Values.ravendb.persistence.storageClass }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.ravendb.persistence.size }}
+  {{- end }}
+{{- end }}

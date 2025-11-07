@@ -1,0 +1,255 @@
+{{- if .Values.rabbitmq.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opus-rabbitmq
+  labels:
+    {{- include "opus-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: rabbitmq
+spec:
+  type: {{ .Values.rabbitmq.service.type }}
+  ports:
+  - port: {{ .Values.rabbitmq.service.amqpPort }}
+    targetPort: 5672
+    name: amqp
+  - port: {{ .Values.rabbitmq.service.managementPort }}
+    targetPort: 15672
+    name: management
+  selector:
+    {{- include "opus-stack.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: rabbitmq
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opus-rabbitmq
+  labels:
+    {{- include "opus-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: rabbitmq
+spec:
+  serviceName: opus-rabbitmq
+  replicas: {{ .Values.rabbitmq.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "opus-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: rabbitmq
+  template:
+    metadata:
+      labels:
+        {{- include "opus-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: "{{ .Values.rabbitmq.image.repository }}:{{ .Values.rabbitmq.image.tag }}"
+        ports:
+        - containerPort: 5672
+          name: amqp
+        - containerPort: 15672
+          name: management
+        {{- if .Values.rabbitmq.persistence.enabled }}
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/rabbitmq
+        {{- end }}
+  {{- if .Values.rabbitmq.persistence.enabled }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.rabbitmq.persistence.storageClass }}
+      storageClassName: {{ .Values.rabbitmq.persistence.storageClass }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.rabbitmq.persistence.size }}
+  {{- end }}
+{{- end }}
+
+{{- if .Values.mqtt.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opus-mqtt
+  labels:
+    {{- include "opus-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mqtt
+spec:
+  type: {{ .Values.mqtt.service.type }}
+  ports:
+  - port: {{ .Values.mqtt.service.mqttPort }}
+    targetPort: 1883
+    name: mqtt
+  - port: {{ .Values.mqtt.service.wsPort }}
+    targetPort: 9001
+    name: websocket
+  selector:
+    {{- include "opus-stack.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: mqtt
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opus-mqtt
+  labels:
+    {{- include "opus-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mqtt
+spec:
+  replicas: {{ .Values.mqtt.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "opus-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: mqtt
+  template:
+    metadata:
+      labels:
+        {{- include "opus-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: mqtt
+    spec:
+      containers:
+      - name: mqtt
+        image: "{{ .Values.mqtt.image.repository }}:{{ .Values.mqtt.image.tag }}"
+        ports:
+        - containerPort: 1883
+          name: mqtt
+        - containerPort: 9001
+          name: websocket
+{{- end }}
+
+{{- if .Values.prometheus.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opus-prometheus
+  labels:
+    {{- include "opus-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: prometheus
+spec:
+  type: {{ .Values.prometheus.service.type }}
+  ports:
+  - port: {{ .Values.prometheus.service.port }}
+    targetPort: 9090
+    name: http
+  selector:
+    {{- include "opus-stack.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: prometheus
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opus-prometheus
+  labels:
+    {{- include "opus-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: prometheus
+spec:
+  serviceName: opus-prometheus
+  replicas: {{ .Values.prometheus.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "opus-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: prometheus
+  template:
+    metadata:
+      labels:
+        {{- include "opus-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: prometheus
+    spec:
+      containers:
+      - name: prometheus
+        image: "{{ .Values.prometheus.image.repository }}:{{ .Values.prometheus.image.tag }}"
+        ports:
+        - containerPort: 9090
+          name: http
+        args:
+        - '--config.file=/etc/prometheus/prometheus.yml'
+        - '--storage.tsdb.path=/prometheus'
+        {{- if .Values.prometheus.persistence.enabled }}
+        volumeMounts:
+        - name: data
+          mountPath: /prometheus
+        {{- end }}
+  {{- if .Values.prometheus.persistence.enabled }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.prometheus.persistence.storageClass }}
+      storageClassName: {{ .Values.prometheus.persistence.storageClass }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.prometheus.persistence.size }}
+  {{- end }}
+{{- end }}
+
+{{- if .Values.grafana.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opus-grafana
+  labels:
+    {{- include "opus-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+spec:
+  type: {{ .Values.grafana.service.type }}
+  ports:
+  - port: {{ .Values.grafana.service.port }}
+    targetPort: 3000
+    name: http
+  selector:
+    {{- include "opus-stack.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opus-grafana
+  labels:
+    {{- include "opus-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+spec:
+  serviceName: opus-grafana
+  replicas: {{ .Values.grafana.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "opus-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: grafana
+  template:
+    metadata:
+      labels:
+        {{- include "opus-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: "{{ .Values.grafana.image.repository }}:{{ .Values.grafana.image.tag }}"
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+          {{- toYaml .Values.grafana.env | nindent 10 }}
+        {{- if .Values.grafana.persistence.enabled }}
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/grafana
+        {{- end }}
+  {{- if .Values.grafana.persistence.enabled }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.grafana.persistence.storageClass }}
+      storageClassName: {{ .Values.grafana.persistence.storageClass }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.grafana.persistence.size }}
+  {{- end }}
+{{- end }}

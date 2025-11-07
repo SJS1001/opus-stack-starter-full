@@ -1,0 +1,65 @@
+{{- if .Values.timescaledb.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: opus-timescaledb
+  labels:
+    {{- include "opus-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: timescaledb
+spec:
+  type: {{ .Values.timescaledb.service.type }}
+  ports:
+  - port: {{ .Values.timescaledb.service.port }}
+    targetPort: 5432
+    name: postgresql
+  selector:
+    {{- include "opus-stack.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: timescaledb
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opus-timescaledb
+  labels:
+    {{- include "opus-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: timescaledb
+spec:
+  serviceName: opus-timescaledb
+  replicas: {{ .Values.timescaledb.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "opus-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: timescaledb
+  template:
+    metadata:
+      labels:
+        {{- include "opus-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: timescaledb
+    spec:
+      containers:
+      - name: timescaledb
+        image: "{{ .Values.timescaledb.image.repository }}:{{ .Values.timescaledb.image.tag }}"
+        ports:
+        - containerPort: 5432
+          name: postgresql
+        env:
+          {{- toYaml .Values.timescaledb.env | nindent 10 }}
+        {{- if .Values.timescaledb.persistence.enabled }}
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+        {{- end }}
+  {{- if .Values.timescaledb.persistence.enabled }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.timescaledb.persistence.storageClass }}
+      storageClassName: {{ .Values.timescaledb.persistence.storageClass }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.timescaledb.persistence.size }}
+  {{- end }}
+{{- end }}
