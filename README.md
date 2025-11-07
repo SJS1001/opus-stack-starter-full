@@ -54,13 +54,18 @@ cd deploy/compose
 docker compose up -d
 ```
 
-2. Verify services:
+2. Run automated tests:
+```bash
+./scripts/test-all.sh
+```
+
+3. Verify services manually:
 ```bash
 curl http://localhost:8088/health  # Gateway
 curl http://localhost:8088/metrics # Prometheus metrics
 ```
 
-3. Access UIs:
+4. Access UIs:
 - Gateway Swagger: http://localhost:8088/swagger
 - Files Swagger: http://localhost:8089/swagger
 - RavenDB Studio: http://localhost:8080
