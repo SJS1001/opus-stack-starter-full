@@ -1,0 +1,21 @@
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Error:</strong> @ErrorMessage
+        <button type="button" class="btn-close" @onclick="Dismiss" aria-label="Close"></button>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string? ErrorMessage { get; set; }
+
+    [Parameter]
+    public EventCallback OnDismiss { get; set; }
+
+    private async Task Dismiss()
+    {
+        ErrorMessage = null;
+        await OnDismiss.InvokeAsync();
+    }
+}

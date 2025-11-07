@@ -1,0 +1,158 @@
+﻿@page "/"
+
+<PageTitle>Dashboard - Opus Stack</PageTitle>
+
+<div class="container-fluid py-4">
+    <h1 class="mb-4">Dashboard</h1>
+
+    <div class="row g-4">
+        <!-- Quick Stats -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card text-white bg-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-subtitle mb-2">Customers</h6>
+                            <h2 class="card-title mb-0">100</h2>
+                        </div>
+                        <i class="bi bi-people-fill fs-1 opacity-50"></i>
+                    </div>
+                    <small class="text-white-50 mt-2 d-block">Total active customers</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card text-white bg-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-subtitle mb-2">Telemetry</h6>
+                            <h2 class="card-title mb-0">500</h2>
+                        </div>
+                        <i class="bi bi-graph-up fs-1 opacity-50"></i>
+                    </div>
+                    <small class="text-white-50 mt-2 d-block">Recent metrics</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card text-white bg-info h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-subtitle mb-2">Workflows</h6>
+                            <h2 class="card-title mb-0">50</h2>
+                        </div>
+                        <i class="bi bi-diagram-3-fill fs-1 opacity-50"></i>
+                    </div>
+                    <small class="text-white-50 mt-2 d-block">Active workflows</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card text-white bg-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-subtitle mb-2">System Health</h6>
+                            <h2 class="card-title mb-0">99.9%</h2>
+                        </div>
+                        <i class="bi bi-heart-pulse-fill fs-1 opacity-50"></i>
+                    </div>
+                    <small class="text-white-50 mt-2 d-block">Uptime</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-4 mt-2">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/customers/create" class="btn btn-outline-primary text-start">
+                            <i class="bi bi-person-plus-fill me-2"></i>
+                            Create New Customer
+                        </a>
+                        <a href="/workflows" class="btn btn-outline-success text-start">
+                            <i class="bi bi-play-circle-fill me-2"></i>
+                            Start Workflow
+                        </a>
+                        <a href="/telemetry" class="btn btn-outline-info text-start">
+                            <i class="bi bi-graph-up me-2"></i>
+                            View Telemetry Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">System Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="bi bi-server text-success me-2"></i>Gateway API</span>
+                            <span class="badge bg-success">Online</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="bi bi-database text-success me-2"></i>RavenDB</span>
+                            <span class="badge bg-success">Connected</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="bi bi-clock-history text-success me-2"></i>TimescaleDB</span>
+                            <span class="badge bg-success">Connected</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="bi bi-envelope text-success me-2"></i>RabbitMQ</span>
+                            <span class="badge bg-success">Online</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="bi bi-broadcast text-success me-2"></i>MQTT Broker</span>
+                            <span class="badge bg-success">Online</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documentation -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Getting Started</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">Welcome to the Opus Stack UI! This is a production-ready microservices platform built with .NET 9 and Blazor.</p>
+
+                    <h6>Features:</h6>
+                    <ul>
+                        <li><strong>Customer Management:</strong> Full CRUD operations with form validation</li>
+                        <li><strong>Telemetry Dashboard:</strong> Real-time metrics with auto-refresh and pagination</li>
+                        <li><strong>Workflow Management:</strong> Process visualization and execution tracking</li>
+                        <li><strong>Error Handling:</strong> Comprehensive error states and user feedback</li>
+                    </ul>
+
+                    <h6 class="mt-3">Next Steps:</h6>
+                    <ol>
+                        <li>Explore the <a href="/customers">Customers</a> page to manage customer data</li>
+                        <li>Check out the <a href="/telemetry">Telemetry Dashboard</a> for real-time metrics</li>
+                        <li>Visit <a href="/workflows">Workflows</a> to start and monitor processes</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,223 @@
+@page "/telemetry"
+@using Opus.Web.Models
+@using Opus.Web.Services
+@inject ApiService ApiService
+@implements IDisposable
+
+<PageTitle>Telemetry Dashboard</PageTitle>
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Telemetry Dashboard</h1>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" @onclick="RefreshData" disabled="@isLoading">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+            <div class="form-check form-switch d-flex align-items-center">
+                <input class="form-check-input me-2" type="checkbox" id="autoRefresh"
+                       @bind="autoRefreshEnabled" @bind:after="ToggleAutoRefresh">
+                <label class="form-check-label" for="autoRefresh">
+                    Auto-refresh (@refreshInterval seconds)
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <ErrorAlert ErrorMessage="@errorMessage" OnDismiss="() => errorMessage = null" />
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Devices</h5>
+                    <h2>@totalDevices</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Active Now</h5>
+                    <h2>@activeDevices</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Avg Temperature</h5>
+                    <h2>@avgTemperature°C</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Avg Humidity</h5>
+                    <h2>@avgHumidity%</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metrics Table -->
+    @if (isLoading && metricsResult == null)
+    {
+        <LoadingSpinner Message="Loading telemetry data..." />
+    }
+    else if (metricsResult != null)
+    {
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Metrics</h5>
+                @if (isLoading)
+                {
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="visually-hidden">Refreshing...</span>
+                    </div>
+                }
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Device ID</th>
+                                <th>Metric Type</th>
+                                <th>Value</th>
+                                <th>Timestamp</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var metric in metricsResult.Items)
+                            {
+                                <tr>
+                                    <td><code>@metric.DeviceId</code></td>
+                                    <td>
+                                        <span class="badge bg-secondary">@metric.MetricType</span>
+                                    </td>
+                                    <td>
+                                        <strong>@metric.Value.ToString("F2")</strong>
+                                        @(metric.MetricType == "temperature" ? "°C" : "%")
+                                    </td>
+                                    <td>@metric.Timestamp.ToString("g")</td>
+                                    <td>
+                                        @{
+                                            var status = GetMetricStatus(metric);
+                                        }
+                                        <span class="badge @status.BadgeClass">@status.Label</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <Pagination T="TelemetryMetric" Result="metricsResult" PageChanged="LoadMetrics" />
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private PagedResult<TelemetryMetric>? metricsResult;
+    private bool isLoading = true;
+    private string? errorMessage;
+    private bool autoRefreshEnabled = false;
+    private int refreshInterval = 10;
+    private System.Threading.Timer? refreshTimer;
+
+    private int totalDevices = 0;
+    private int activeDevices = 0;
+    private double avgTemperature = 0;
+    private double avgHumidity = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMetrics(1);
+    }
+
+    private async Task LoadMetrics(int page)
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+            metricsResult = await ApiService.GetTelemetryMetricsAsync(page, 20);
+
+            // Calculate summary stats
+            if (metricsResult != null)
+            {
+                var allDevices = metricsResult.Items.Select(m => m.DeviceId).Distinct().ToList();
+                totalDevices = allDevices.Count;
+                activeDevices = metricsResult.Items
+                    .Where(m => m.Timestamp > DateTime.UtcNow.AddMinutes(-5))
+                    .Select(m => m.DeviceId)
+                    .Distinct()
+                    .Count();
+
+                var tempMetrics = metricsResult.Items.Where(m => m.MetricType == "temperature").ToList();
+                var humidityMetrics = metricsResult.Items.Where(m => m.MetricType == "humidity").ToList();
+
+                avgTemperature = tempMetrics.Any() ? tempMetrics.Average(m => m.Value) : 0;
+                avgHumidity = humidityMetrics.Any() ? humidityMetrics.Average(m => m.Value) : 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadMetrics(metricsResult?.Page ?? 1);
+    }
+
+    private void ToggleAutoRefresh()
+    {
+        if (autoRefreshEnabled)
+        {
+            refreshTimer = new System.Threading.Timer(async _ =>
+            {
+                await InvokeAsync(async () =>
+                {
+                    await RefreshData();
+                    StateHasChanged();
+                });
+            }, null, TimeSpan.FromSeconds(refreshInterval), TimeSpan.FromSeconds(refreshInterval));
+        }
+        else
+        {
+            refreshTimer?.Dispose();
+            refreshTimer = null;
+        }
+    }
+
+    private (string BadgeClass, string Label) GetMetricStatus(TelemetryMetric metric)
+    {
+        if (metric.MetricType == "temperature")
+        {
+            if (metric.Value > 80) return ("bg-danger", "Critical");
+            if (metric.Value > 60) return ("bg-warning", "Warning");
+            return ("bg-success", "Normal");
+        }
+        else if (metric.MetricType == "humidity")
+        {
+            if (metric.Value > 80 || metric.Value < 20) return ("bg-warning", "Warning");
+            return ("bg-success", "Normal");
+        }
+        return ("bg-secondary", "Unknown");
+    }
+
+    public void Dispose()
+    {
+        refreshTimer?.Dispose();
+    }
+}

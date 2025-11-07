@@ -29,6 +29,8 @@ jobs:
             dockerfile: services/workflow/Opus.Workflow.Api/Dockerfile
           - name: files
             dockerfile: services/files/Opus.Files.Api/Dockerfile
+          - name: web
+            dockerfile: ui/Opus.Web/Opus.Web/Dockerfile
 
     steps:
       - name: Checkout repository

@@ -1,0 +1,171 @@
+@page "/customers"
+@using Opus.Web.Models
+@using Opus.Web.Services
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Customers</PageTitle>
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Customers</h1>
+        <button class="btn btn-primary" @onclick="NavigateToCreate">
+            <i class="bi bi-plus-circle"></i> Create Customer
+        </button>
+    </div>
+
+    <ErrorAlert ErrorMessage="@errorMessage" OnDismiss="() => errorMessage = null" />
+
+    @if (isLoading)
+    {
+        <LoadingSpinner Message="Loading customers..." />
+    }
+    else if (customersResult != null)
+    {
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var customer in customersResult.Items)
+                            {
+                                <tr>
+                                    <td><code>@customer.Id</code></td>
+                                    <td>@customer.Name</td>
+                                    <td>@customer.Email</td>
+                                    <td>@customer.CreatedAt.ToString("g")</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary me-1"
+                                                @onclick="() => NavigateToEdit(customer.Id)">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                @onclick="() => ShowDeleteConfirmation(customer)">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <Pagination T="Customer" Result="customersResult" PageChanged="LoadCustomers" />
+            </div>
+        </div>
+    }
+
+    @if (showDeleteModal && customerToDelete != null)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirm Delete</h5>
+                        <button type="button" class="btn-close" @onclick="CancelDelete"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete customer <strong>@customerToDelete.Name</strong>?</p>
+                        <p class="text-muted">This action cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                        <button type="button" class="btn btn-danger" @onclick="ConfirmDelete" disabled="@isDeleting">
+                            @if (isDeleting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1"></span>
+                            }
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private PagedResult<Customer>? customersResult;
+    private bool isLoading = true;
+    private string? errorMessage;
+    private bool showDeleteModal = false;
+    private Customer? customerToDelete;
+    private bool isDeleting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCustomers(1);
+    }
+
+    private async Task LoadCustomers(int page)
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+            customersResult = await ApiService.GetCustomersAsync(page, 10);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToCreate()
+    {
+        Navigation.NavigateTo("/customers/create");
+    }
+
+    private void NavigateToEdit(string id)
+    {
+        Navigation.NavigateTo($"/customers/edit/{id}");
+    }
+
+    private void ShowDeleteConfirmation(Customer customer)
+    {
+        customerToDelete = customer;
+        showDeleteModal = true;
+    }
+
+    private void CancelDelete()
+    {
+        customerToDelete = null;
+        showDeleteModal = false;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (customerToDelete == null) return;
+
+        try
+        {
+            isDeleting = true;
+            await ApiService.DeleteCustomerAsync(customerToDelete.Id);
+            showDeleteModal = false;
+            customerToDelete = null;
+            await LoadCustomers(customersResult?.Page ?? 1);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            showDeleteModal = false;
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+}

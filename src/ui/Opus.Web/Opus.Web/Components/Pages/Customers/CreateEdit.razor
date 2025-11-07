@@ -1,0 +1,199 @@
+@page "/customers/create"
+@page "/customers/edit/{Id}"
+@using System.ComponentModel.DataAnnotations
+@using Opus.Web.Models
+@using Opus.Web.Services
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsEditMode ? "Edit Customer" : "Create Customer")</PageTitle>
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-8 col-xl-6">
+            <div class="d-flex align-items-center mb-4">
+                <button class="btn btn-outline-secondary me-3" @onclick="NavigateBack">
+                    <i class="bi bi-arrow-left"></i> Back
+                </button>
+                <h1>@(IsEditMode ? "Edit Customer" : "Create Customer")</h1>
+            </div>
+
+            <ErrorAlert ErrorMessage="@errorMessage" OnDismiss="() => errorMessage = null" />
+
+            @if (isLoading)
+            {
+                <LoadingSpinner Message="@(IsEditMode ? "Loading customer..." : "Saving...")" />
+            }
+            else
+            {
+                <div class="card">
+                    <div class="card-body">
+                        <EditForm Model="@customerModel" OnValidSubmit="HandleValidSubmit">
+                            <DataAnnotationsValidator />
+
+                            <div class="mb-3">
+                                <label for="id" class="form-label">Customer ID *</label>
+                                <InputText id="id" class="form-control" @bind-Value="customerModel.Id"
+                                           disabled="@IsEditMode" placeholder="customer-001" />
+                                <ValidationMessage For="@(() => customerModel.Id)" class="text-danger" />
+                                @if (!IsEditMode)
+                                {
+                                    <div class="form-text">Unique identifier for the customer (e.g., customer-001)</div>
+                                }
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Name *</label>
+                                <InputText id="name" class="form-control" @bind-Value="customerModel.Name"
+                                           placeholder="John Doe" />
+                                <ValidationMessage For="@(() => customerModel.Name)" class="text-danger" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <InputText id="email" type="email" class="form-control" @bind-Value="customerModel.Email"
+                                           placeholder="john.doe@example.com" />
+                                <ValidationMessage For="@(() => customerModel.Email)" class="text-danger" />
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                                    @if (isSaving)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-1"></span>
+                                    }
+                                    @(IsEditMode ? "Update Customer" : "Create Customer")
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" @onclick="NavigateBack" disabled="@isSaving">
+                                    Cancel
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+
+                @if (IsEditMode)
+                {
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <h5 class="card-title text-muted">Metadata</h5>
+                            <p class="mb-1"><strong>Created:</strong> @customerModel.CreatedAt.ToString("f")</p>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private CustomerFormModel customerModel = new();
+    private bool isLoading = false;
+    private bool isSaving = false;
+    private string? errorMessage;
+
+    private bool IsEditMode => !string.IsNullOrEmpty(Id);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEditMode && !string.IsNullOrEmpty(Id))
+        {
+            await LoadCustomer();
+        }
+    }
+
+    private async Task LoadCustomer()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            var customer = await ApiService.GetCustomerAsync(Id!);
+            if (customer == null)
+            {
+                errorMessage = "Customer not found";
+                return;
+            }
+
+            customerModel = new CustomerFormModel
+            {
+                Id = customer.Id,
+                Name = customer.Name,
+                Email = customer.Email,
+                CreatedAt = customer.CreatedAt
+            };
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            isSaving = true;
+            errorMessage = null;
+
+            var customer = new Customer
+            {
+                Id = customerModel.Id,
+                Name = customerModel.Name,
+                Email = customerModel.Email,
+                CreatedAt = customerModel.CreatedAt
+            };
+
+            if (IsEditMode)
+            {
+                await ApiService.UpdateCustomerAsync(Id!, customer);
+            }
+            else
+            {
+                await ApiService.CreateCustomerAsync(customer);
+            }
+
+            Navigation.NavigateTo("/customers");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/customers");
+    }
+
+    private class CustomerFormModel
+    {
+        [Required(ErrorMessage = "Customer ID is required")]
+        [StringLength(50, MinimumLength = 3, ErrorMessage = "ID must be between 3 and 50 characters")]
+        [RegularExpression(@"^[a-zA-Z0-9\-_]+$", ErrorMessage = "ID can only contain letters, numbers, hyphens, and underscores")]
+        public string Id { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Name is required")]
+        [StringLength(100, MinimumLength = 2, ErrorMessage = "Name must be between 2 and 100 characters")]
+        public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        [StringLength(255, ErrorMessage = "Email must not exceed 255 characters")]
+        public string Email { get; set; } = string.Empty;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
+}

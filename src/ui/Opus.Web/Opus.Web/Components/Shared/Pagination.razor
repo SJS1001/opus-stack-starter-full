@@ -1,0 +1,59 @@
+@typeparam T
+
+<div class="pagination-container">
+    @if (Result != null && Result.TotalPages > 1)
+    {
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                <li class="page-item @(Result.Page == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => OnPageChanged(1)" disabled="@(Result.Page == 1)">
+                        First
+                    </button>
+                </li>
+                <li class="page-item @(Result.Page == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => OnPageChanged(Result.Page - 1)" disabled="@(Result.Page == 1)">
+                        Previous
+                    </button>
+                </li>
+
+                @for (int i = Math.Max(1, Result.Page - 2); i <= Math.Min(Result.TotalPages, Result.Page + 2); i++)
+                {
+                    var pageNumber = i;
+                    <li class="page-item @(Result.Page == pageNumber ? "active" : "")">
+                        <button class="page-link" @onclick="() => OnPageChanged(pageNumber)">
+                            @pageNumber
+                        </button>
+                    </li>
+                }
+
+                <li class="page-item @(Result.Page == Result.TotalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => OnPageChanged(Result.Page + 1)" disabled="@(Result.Page == Result.TotalPages)">
+                        Next
+                    </button>
+                </li>
+                <li class="page-item @(Result.Page == Result.TotalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => OnPageChanged(Result.TotalPages)" disabled="@(Result.Page == Result.TotalPages)">
+                        Last
+                    </button>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="pagination-info">
+            Showing @((Result.Page - 1) * Result.PageSize + 1) to @(Math.Min(Result.Page * Result.PageSize, Result.TotalCount)) of @Result.TotalCount items
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public PagedResult<T>? Result { get; set; }
+
+    [Parameter]
+    public EventCallback<int> PageChanged { get; set; }
+
+    private async Task OnPageChanged(int page)
+    {
+        await PageChanged.InvokeAsync(page);
+    }
+}

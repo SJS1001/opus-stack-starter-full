@@ -1,0 +1,223 @@
+/* Custom Opus Stack Styles */
+
+/* Loading Spinner */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+/* Pagination */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.pagination {
+    margin: 0;
+}
+
+.pagination-info {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* Error Alert Animations */
+.alert {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Card Hover Effects */
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Table Enhancements */
+.table-hover tbody tr:hover {
+    background-color: rgba(0,0,0,0.03);
+    cursor: pointer;
+}
+
+/* Badge Enhancements */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+/* Button Loading State */
+.btn .spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* Form Validation */
+.validation-message {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.form-control.invalid,
+.form-select.invalid {
+    border-color: #dc3545;
+}
+
+.form-control.valid,
+.form-select.valid {
+    border-color: #198754;
+}
+
+/* Modal Enhancements */
+.modal.show {
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Timeline for Workflow Details */
+.timeline {
+    position: relative;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 0;
+}
+
+/* Status Indicators */
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-indicator.online {
+    background-color: #28a745;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+}
+
+.status-indicator.offline {
+    background-color: #dc3545;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.3);
+}
+
+.status-indicator.warning {
+    background-color: #ffc107;
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.3);
+}
+
+/* Stat Cards on Dashboard */
+.stat-card {
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: scale(1.02);
+}
+
+/* Code Elements */
+code {
+    padding: 0.2rem 0.4rem;
+    font-size: 87.5%;
+    color: #e83e8c;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .pagination-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .pagination {
+        justify-content: center;
+    }
+
+    .pagination-info {
+        text-align: center;
+    }
+}
+
+/* Toast Notifications (if needed later) */
+.toast-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1050;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+/* Utility Classes */
+.text-muted-light {
+    color: #adb5bd !important;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.hover-primary:hover {
+    color: #0d6efd !important;
+}
+
+/* Dropdown Enhancements */
+.dropdown-menu {
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* Navigation Active State */
+.nav-link.active {
+    font-weight: 600;
+}
