@@ -1,10 +1,24 @@
 using MQTTnet;
 using MQTTnet.Client;
 using Npgsql;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
 
 var b = WebApplication.CreateBuilder(args);
 var cfg = b.Configuration;
 var s = b.Services;
+
+// OpenTelemetry configuration
+s.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService("opus-telemetry"))
+    .WithTracing(t => t
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation())
+    .WithMetrics(m => m
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddPrometheusExporter());
 s.AddSingleton<NpgsqlDataSource>(_ => NpgsqlDataSource.Create(cfg["PG:ConnectionString"]!));
 s.AddEndpointsApiExplorer();
 s.AddSwaggerGen();
@@ -62,4 +76,5 @@ app.MapGet("/metrics/latest/{deviceId}", async (string deviceId, NpgsqlDataSourc
 });
 app.UseSwagger();
 app.UseSwaggerUI();
+app.MapPrometheusScrapingEndpoint();
 app.Run();

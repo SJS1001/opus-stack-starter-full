@@ -6,6 +6,10 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="*" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="*" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="*" />
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="*-*" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="*" />
   </ItemGroup>
   <ItemGroup>
 

@@ -1,8 +1,22 @@
 using Raven.Client.Documents;
 using Opus.Messaging;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
 
 var b = WebApplication.CreateBuilder(args);
 var s = b.Services;
+
+// OpenTelemetry configuration
+s.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService("opus-customer"))
+    .WithTracing(t => t
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation())
+    .WithMetrics(m => m
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddPrometheusExporter());
 s.AddSingleton<IDocumentStore>(_ =>
 {
     var store = new DocumentStore
@@ -33,5 +47,6 @@ app.MapPost("/customers", async (Customer c, IDocumentStore store, IMessageBus b
 });
 app.UseSwagger();
 app.UseSwaggerUI();
+app.MapPrometheusScrapingEndpoint();
 app.Run();
 record Customer(string Id, string Name, string Email);

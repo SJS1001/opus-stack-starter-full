@@ -1,5 +1,20 @@
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
+
 var builder = WebApplication.CreateBuilder(args);
 var cfg = builder.Configuration;
+
+// OpenTelemetry configuration
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService("opus-gateway"))
+    .WithTracing(t => t
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation())
+    .WithMetrics(m => m
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddPrometheusExporter());
 
 builder.Services.AddCors();
 
@@ -49,4 +64,5 @@ app.MapGet("/health", () => Results.Ok(new { ok = true }));
 app.MapGet("/gateway/ping", () => "pong");
 app.UseSwagger();
 app.UseSwaggerUI();
+app.MapPrometheusScrapingEndpoint();
 app.Run();
